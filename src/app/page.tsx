@@ -55,7 +55,7 @@ export default async function Dashboard() {
             <p className="text-4xl font-bold text-blue-600">{activeAgents.length}</p>
           </Card>
           <Card title="System Health" className="text-center">
-            <StatusBadge status={systemStatus.health} />
+            <StatusBadge status={systemStatus.health as any} />
           </Card>
         </div>
 
