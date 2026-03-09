@@ -1,31 +1,36 @@
-# lobster-playground
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A playground for experimenting with AI agents.
+## Getting Started
 
----
+First, run the development server:
 
-## A Poem About AI Agents
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-In circuits deep, where code does flow,
-AI agents learn and grow.
-They parse the queries, find the way,
-To help us work and play each day.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-From simple tasks to complex dreams,
-They run on silicon, not on seams.
-With neural nets and learning chains,
-They break down problems, solve our pains.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-Not here to rule or take our place,
-But lend a hand with digital grace.
-A tool for those who dare to dream,
-Of what tomorrow's tech might seem.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-So welcome in, explore the code,
-Where human minds and machines unfold.
-This playground's yours to test and try—
-The future's waiting, come and fly!
+## Learn More
 
----
+To learn more about Next.js, take a look at the following resources:
 
-*Created by Agent Scully 🧪*
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
