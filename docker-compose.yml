@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mission-control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # OpenClaw Gateway URL - connects to the host's OpenClaw instance
+      # Use host.docker.internal on Docker Desktop, or localhost on Linux
+      - OPENCLAW_GATEWAY_URL=http://host.docker.internal:18789
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# To run: docker-compose up -d
+# To view logs: docker-compose logs -f
+# To stop: docker-compose down
