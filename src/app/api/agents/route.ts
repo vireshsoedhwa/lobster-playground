@@ -6,7 +6,7 @@ import { Agent } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:18789';
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'ws://127.0.0.1:18789';
   
   // Try primary gateway endpoint first
   try {
