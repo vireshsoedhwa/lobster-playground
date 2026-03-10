@@ -5,7 +5,7 @@ import { Agent, Task, SystemStatus } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-async function getAgents(): Promise<Agent[]> {
+async function getAgents(): Promise<{ connected: boolean; agents: Agent[] }> {
   try {
     const res = await fetch('/api/agents', { 
       cache: 'no-store',
@@ -14,7 +14,7 @@ async function getAgents(): Promise<Agent[]> {
     if (!res.ok) throw new Error('Failed to fetch agents');
     return res.json();
   } catch {
-    return [];
+    return { connected: false, agents: [] };
   }
 }
 
@@ -32,19 +32,23 @@ async function getTasks(): Promise<Task[]> {
 }
 
 export default async function Dashboard() {
-  const agents = await getAgents();
+  const { connected, agents } = await getAgents();
   const tasks = await getTasks();
   
   const activeTasks = tasks.filter(t => t.status === 'in_progress');
   const activeAgents = agents.filter(a => a.status === 'active' || a.status === 'running');
   const recentAgents = agents.slice(0, 4);
 
+  // Use connection status for health, not agent count
+  // Empty agent list is OK - only "degraded" if connection fails
+  const systemHealth = connected ? 'healthy' : 'degraded';
+
   const systemStatus = {
     totalAgents: agents.length || 3,
     activeAgents: activeAgents.length || 1,
     idleAgents: agents.filter(a => a.status === 'idle').length,
     offlineAgents: agents.filter(a => a.status === 'offline').length,
-    health: agents.length > 0 ? 'healthy' : 'degraded' as const,
+    health: systemHealth,
     uptime: 'N/A',
     lastUpdate: new Date(),
   };
@@ -125,7 +129,7 @@ export default async function Dashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">OpenClaw Gateway</span>
-                <StatusBadge status={agents.length > 0 ? 'healthy' : 'degraded'} />
+                <StatusBadge status={connected ? 'healthy' : 'degraded'} />
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">API Status</span>
@@ -133,7 +137,7 @@ export default async function Dashboard() {
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">Data Source</span>
-                <span className="text-sm text-gray-500">{agents.length > 0 ? 'OpenClaw Gateway' : 'No Data'}</span>
+                <span className="text-sm text-gray-500">{connected ? 'OpenClaw Gateway' : 'No Data'}</span>
               </div>
             </div>
             <Link href="/system" className="mt-4 inline-block text-blue-600 hover:text-blue-800">

@@ -39,7 +39,8 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json(agents);
+    // Return connection status along with agents
+    return NextResponse.json({ connected: true, agents });
   } catch (gatewayError) {
     console.log('Primary gateway unavailable, trying sessions API:', gatewayError);
   }
@@ -70,9 +71,11 @@ export async function GET() {
       workspace: session.workspace || '',
     })) : [];
 
-    return NextResponse.json(agents);
+    // Return connection status along with agents
+    return NextResponse.json({ connected: true, agents });
   } catch (error) {
     console.error('Failed to fetch from OpenClaw gateway:', error);
-    return NextResponse.json({ agents: [] });
+    // Return connected: false to indicate gateway is unreachable
+    return NextResponse.json({ connected: false, agents: [] });
   }
 }
