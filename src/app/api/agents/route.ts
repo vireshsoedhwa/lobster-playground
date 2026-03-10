@@ -6,7 +6,7 @@ import { Agent } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:18789';
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'ws://127.0.0.1:18789';
   
   // Try primary gateway endpoint first
   try {
@@ -39,7 +39,8 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json(agents);
+    // Return connection status along with agents
+    return NextResponse.json({ connected: true, agents });
   } catch (gatewayError) {
     console.log('Primary gateway unavailable, trying sessions API:', gatewayError);
   }
@@ -70,9 +71,11 @@ export async function GET() {
       workspace: session.workspace || '',
     })) : [];
 
-    return NextResponse.json(agents);
+    // Return connection status along with agents
+    return NextResponse.json({ connected: true, agents });
   } catch (error) {
     console.error('Failed to fetch from OpenClaw gateway:', error);
-    return NextResponse.json({ agents: [] });
+    // Return connected: false to indicate gateway is unreachable
+    return NextResponse.json({ connected: false, agents: [] });
   }
 }
