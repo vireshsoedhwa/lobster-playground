@@ -1,36 +1,52 @@
 import Link from 'next/link';
 import { Card } from '@/components/Card';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Agent, Task, SystemStatus } from '@/types';
 
-// Fetch agent data from API (which connects to OpenClaw gateway)
-async function getAgents() {
+export const dynamic = 'force-dynamic';
+
+async function getAgents(): Promise<Agent[]> {
   try {
     const res = await fetch('/api/agents', { 
       cache: 'no-store',
-      next: { revalidate: 10 } // Refresh every 10 seconds
+      next: { revalidate: 10 } 
     });
-    if (res.ok) {
-      const data = await res.json();
-      return data.agents || [];
-    }
-  } catch (e) {
-    console.error('Failed to fetch agents:', e);
+    if (!res.ok) throw new Error('Failed to fetch agents');
+    return res.json();
+  } catch {
+    return [];
   }
-  return [];
 }
 
-// Server component - fetches data on the server
+async function getTasks(): Promise<Task[]> {
+  try {
+    const res = await fetch('/api/sessions', { 
+      cache: 'no-store',
+      next: { revalidate: 10 } 
+    });
+    if (!res.ok) throw new Error('Failed to fetch tasks');
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 export default async function Dashboard() {
   const agents = await getAgents();
+  const tasks = await getTasks();
   
-  // Use fetched agents or empty (mockData is fallback in API)
-  const activeAgents = agents.filter((a: any) => a.status === 'running' || a.status === 'active');
-  const displayAgents = agents.length > 0 ? agents : [];
+  const activeTasks = tasks.filter(t => t.status === 'in_progress');
+  const activeAgents = agents.filter(a => a.status === 'active' || a.status === 'running');
+  const recentAgents = agents.slice(0, 4);
 
   const systemStatus = {
     totalAgents: agents.length || 3,
     activeAgents: activeAgents.length || 1,
-    health: agents.length > 0 ? 'healthy' : 'degraded'
+    idleAgents: agents.filter(a => a.status === 'idle').length,
+    offlineAgents: agents.filter(a => a.status === 'offline').length,
+    health: agents.length > 0 ? 'healthy' : 'degraded' as const,
+    uptime: 'N/A',
+    lastUpdate: new Date(),
   };
 
   return (
@@ -52,26 +68,50 @@ export default async function Dashboard() {
             <p className="text-4xl font-bold text-green-600">{systemStatus.activeAgents}</p>
           </Card>
           <Card title="Tasks In Progress" className="text-center">
-            <p className="text-4xl font-bold text-blue-600">{activeAgents.length}</p>
+            <p className="text-4xl font-bold text-blue-600">{activeTasks.length}</p>
           </Card>
           <Card title="System Health" className="text-center">
-            <StatusBadge status={systemStatus.health as any} />
+            <StatusBadge status={systemStatus.health} />
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Active Agents */}
+          {/* Active Tasks */}
+          <Card title="Active Tasks">
+            <div className="space-y-3">
+              {activeTasks.length > 0 ? (
+                activeTasks.map(task => (
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{task.title}</p>
+                      <p className="text-sm text-gray-500">Agent: {task.agent || 'Unassigned'}</p>
+                    </div>
+                    <StatusBadge status={task.status} />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No active tasks</p>
+              )}
+            </div>
+            <Link href="/tasks" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+              View all tasks →
+            </Link>
+          </Card>
+
+          {/* Agents Overview */}
           <Card title="Agents">
             <div className="space-y-3">
-              {displayAgents.length > 0 ? displayAgents.slice(0, 5).map((agent: any) => (
-                <div key={agent.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{agent.name}</p>
-                    <p className="text-sm text-gray-500">{agent.role}</p>
+              {recentAgents.length > 0 ? (
+                recentAgents.map(agent => (
+                  <div key={agent.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{agent.name}</p>
+                      <p className="text-sm text-gray-500">{agent.role}</p>
+                    </div>
+                    <StatusBadge status={agent.status} />
                   </div>
-                  <StatusBadge status={agent.status} />
-                </div>
-              )) : (
+                ))
+              ) : (
                 <p className="text-gray-500">No agents connected. Run the dashboard with OpenClaw to see agents.</p>
               )}
             </div>
@@ -80,7 +120,7 @@ export default async function Dashboard() {
             </Link>
           </Card>
 
-          {/* Quick Status */}
+          {/* Connection Status */}
           <Card title="Connection Status">
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -93,7 +133,32 @@ export default async function Dashboard() {
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">Data Source</span>
-                <span className="text-sm text-gray-500">{agents.length > 0 ? 'OpenClaw Gateway' : 'Mock Data'}</span>
+                <span className="text-sm text-gray-500">{agents.length > 0 ? 'OpenClaw Gateway' : 'No Data'}</span>
+              </div>
+            </div>
+            <Link href="/system" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
+              View system details →
+            </Link>
+          </Card>
+
+          {/* System Status */}
+          <Card title="System Status">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Uptime</p>
+                <p className="font-medium">{systemStatus.uptime}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Idle Agents</p>
+                <p className="font-medium">{systemStatus.idleAgents}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Offline Agents</p>
+                <p className="font-medium">{systemStatus.offlineAgents}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Last Update</p>
+                <p className="font-medium">{systemStatus.lastUpdate ? new Date(systemStatus.lastUpdate).toLocaleTimeString() : 'N/A'}</p>
               </div>
             </div>
             <Link href="/system" className="mt-4 inline-block text-blue-600 hover:text-blue-800">
